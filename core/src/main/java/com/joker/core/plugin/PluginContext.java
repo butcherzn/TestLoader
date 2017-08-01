@@ -22,6 +22,7 @@ public class PluginContext extends ContextWrapper {
         mPlugin = plugin;
     }
 
+
     @Override
     public Context getApplicationContext() {
         return mPlugin.getApplicationContext();
