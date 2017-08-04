@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: /Users/joker/develop/android/test/TestLoader/stub/src/main/aidl/android/app/IActivityManager.aidl
+ * Original file: D:\\develop\\android\\test\\TestLoader\\stub\\src\\main\\aidl\\android\\app\\IActivityManager.aidl
  */
 package android.app;
 /**

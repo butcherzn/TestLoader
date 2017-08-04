@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: /Users/joker/develop/android/test/TestLoader/stub/src/main/aidl/android/content/IIntentReceiver.aidl
+ * Original file: D:\\develop\\android\\test\\TestLoader\\stub\\src\\main\\aidl\\android\\content\\IIntentReceiver.aidl
  */
 package android.content;
 /**

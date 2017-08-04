@@ -1,6 +1,7 @@
 package com.joker.core;
 
 import android.app.Application;
+import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
@@ -28,6 +29,8 @@ public class PluginManager {
 
     private Map<String, LoadedPlugin> mPlugins = new ConcurrentHashMap<>();
     private Context mContext;
+
+    private Instrumentation mInstrumentation;
 
     public static PluginManager getInstance(Context context) {
         if (sInstance == null) {
@@ -64,6 +67,10 @@ public class PluginManager {
         return mContext;
     }
 
+    public Instrumentation getInstrumentation(){
+        return mInstrumentation;
+    }
+
 
     public void loadPlugin(File apk) throws Exception {
         if (apk == null) {
@@ -76,8 +83,8 @@ public class PluginManager {
         LoadedPlugin loadedPlugin = LoadedPlugin.create(this, this.mContext, apk);
         if (loadedPlugin != null) {
             mPlugins.put(loadedPlugin.getPackageName(), loadedPlugin);
-            //启动
-
+            //启动，try to invoke plugin's application
+            loadedPlugin.invokeApplication();
         } else {
             throw new RuntimeException("cant load plugin");
         }

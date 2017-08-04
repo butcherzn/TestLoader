@@ -2,6 +2,7 @@ package com.joker.core.plugin;
 
 import android.annotation.TargetApi;
 import android.app.Application;
+import android.app.Instrumentation;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.ContentResolver;
@@ -42,9 +43,11 @@ import android.support.annotation.WorkerThread;
 import android.support.annotation.XmlRes;
 
 import com.joker.core.PluginManager;
+import com.joker.core.utils.DexUtils;
 import com.joker.core.utils.PackageParserCompat;
 import com.joker.core.utils.PluginUtils;
 import com.joker.core.utils.RefUtils;
+import com.joker.core.utils.RunUtils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -213,10 +216,16 @@ public final class LoadedPlugin {
     private static ClassLoader createClassLoader(Context context, File apk, File libsDir, ClassLoader parent) {
         File dexOutputDir = context.getDir(Constants.OPTIMIZE_DIR, Context.MODE_PRIVATE);
         String dexOutputPath = dexOutputDir.getAbsolutePath();
+        // dexclassloader
         DexClassLoader dexClassLoader = new DexClassLoader(apk.getAbsolutePath(), dexOutputPath, libsDir.getAbsolutePath(), parent);
         if (Constants.COMBINE_CLASSLOADER) {
             //操作合并
             //TODO
+            try {
+                DexUtils.insertDex(dexClassLoader);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         return dexClassLoader;
     }
@@ -225,6 +234,40 @@ public final class LoadedPlugin {
     private static ResolveInfo chooseBestActivity(Intent intent, String s, int flags, List<ResolveInfo> resolveInfos) {
         return resolveInfos.get(0);
     }
+
+
+    private Application makeApplication(boolean forceDefaultAppClass, Instrumentation instrumentation) {
+        if (null != this.mApplication) {
+            return this.mApplication;
+        }
+        String applicationClass = this.mPackage.applicationInfo.className;
+        if (forceDefaultAppClass || null == applicationClass) {
+            applicationClass = "android.app.Application";
+        }
+        // mApplication is null
+        try {
+            this.mApplication = instrumentation.newApplication(this.mClassLoader, applicationClass, this.mPluginContext);
+            instrumentation.callApplicationOnCreate(this.mApplication);
+            return this.mApplication;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
+    public void invokeApplication() {
+        if (mApplication != null) {
+            return;
+        }
+        RunUtils.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mApplication = makeApplication(false, mPluginManager.getInstrumentation());
+            }
+        }, true);
+    }
+
 
     public String getPluginPath() {
         return mPluginPath;

@@ -1,6 +1,6 @@
 /*
  * This file is auto-generated.  DO NOT MODIFY.
- * Original file: /Users/joker/develop/android/test/TestLoader/stub/src/main/aidl/android/content/IIntentSender.aidl
+ * Original file: D:\\develop\\android\\test\\TestLoader\\stub\\src\\main\\aidl\\android\\content\\IIntentSender.aidl
  */
 package android.content;
 public interface IIntentSender extends android.os.IInterface
