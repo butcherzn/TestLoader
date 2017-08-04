@@ -1,9 +1,12 @@
 package com.joker.core.utils;
 
+import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageInfo;
 import android.os.Build;
-import android.util.Log;
+
+import com.joker.core.plugin.Constants;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -81,7 +84,32 @@ public class PluginUtils {
                 }
             }
         }
+    }
 
+    /**
+     * 获得目标activity
+     *
+     * @param intent
+     * @return
+     */
+    public static String getTargetActivity(Intent intent) {
+        return intent.getStringExtra(Constants.KEY_TARGET_ACTIVITY);
+    }
+
+
+    public static ComponentName getComponentName(Intent intent) {
+        return new ComponentName(intent.getStringExtra(Constants.KEY_TARGET_PACKAGE), intent.getStringExtra(Constants.KEY_TARGET_ACTIVITY));
+    }
+
+
+    /**
+     * 是否来自插件
+     *
+     * @param intent
+     * @return
+     */
+    public static boolean isIntentFromPlugin(Intent intent) {
+        return intent.getBooleanExtra(Constants.KEY_IS_FROM_PLUGIN, false);
     }
 
 

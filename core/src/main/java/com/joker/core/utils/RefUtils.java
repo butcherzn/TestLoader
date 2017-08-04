@@ -11,6 +11,20 @@ import java.lang.reflect.Method;
 
 public class RefUtils {
 
+    public static Object getStaticField(Class clazz, String fieldName) throws Exception {
+        return getField(clazz, null, fieldName);
+    }
+
+    public static Object getStaticFieldSafely(Class clazz, String fieldName) {
+        try {
+            return getStaticField(clazz, fieldName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
     /**
      * @param clazz
      * @param target

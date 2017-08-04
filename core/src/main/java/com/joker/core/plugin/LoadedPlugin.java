@@ -273,6 +273,13 @@ public final class LoadedPlugin {
         return mPluginPath;
     }
 
+    public Context getPluginContext() {
+        return this.mPluginContext;
+    }
+
+    public Application getApplication() {
+        return mApplication;
+    }
 
     public PluginManager getPluginManager() {
         return mPluginManager;

@@ -1,14 +1,24 @@
 package com.joker.core;
 
+import android.app.ActivityManagerNative;
 import android.app.Application;
+import android.app.IActivityManager;
 import android.app.Instrumentation;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ProviderInfo;
 import android.content.pm.ResolveInfo;
+import android.util.Singleton;
 
+import com.joker.core.plugin.ActivityManagerHookProxy;
+import com.joker.core.plugin.ComponentsHandler;
+import com.joker.core.plugin.InstrumentationProxy;
 import com.joker.core.plugin.LoadedPlugin;
+import com.joker.core.utils.InstrumentationUtils;
+import com.joker.core.utils.PluginUtils;
+import com.joker.core.utils.RefUtils;
+import com.joker.core.utils.RunUtils;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -31,6 +41,10 @@ public class PluginManager {
     private Context mContext;
 
     private Instrumentation mInstrumentation;
+
+    private IActivityManager mActivityManager;
+
+    private ComponentsHandler mComponentsHandler;
 
     public static PluginManager getInstance(Context context) {
         if (sInstance == null) {
@@ -56,9 +70,67 @@ public class PluginManager {
 
     private void prepare() {
         PluginSystem.sContext = getHostContext();
+        hookInstrumetationAndHandler();
+        hookSystemServices();
+    }
 
+    /**
+     * 初始化入口
+     */
+    public void init() {
+        this.mComponentsHandler = new ComponentsHandler(this);
+        RunUtils.getThreadPool().execute(new Runnable() {
+            @Override
+            public void run() {
+                //
+                doInWorkThread();
+            }
+        });
+    }
+
+
+    private void doInWorkThread() {
 
     }
+
+    private void hookInstrumetationAndHandler() {
+        Instrumentation instrumentation = InstrumentationUtils.getInstrumentation(mContext);
+        if (instrumentation != null) {
+            if (instrumentation.getClass().getName().contains("lbe")) {
+                // 360 虚拟空间
+                System.exit(0);
+            }
+            Object activityThread = InstrumentationUtils.getActivityThread(mContext);
+            InstrumentationProxy proxyInstrumentation = new InstrumentationProxy(this, instrumentation);
+            // TODO
+            InstrumentationUtils.setInstrumentation(activityThread, proxyInstrumentation);
+            // TODO
+            mInstrumentation = instrumentation;
+        } else {
+            // TODO
+        }
+    }
+
+    private void hookSystemServices() {
+        //Singleton<IActivityManager>
+        try {
+            Singleton<IActivityManager> gDefault = (Singleton<IActivityManager>) RefUtils.getStaticField(ActivityManagerNative.class, "gDefault");
+            gDefault.get();
+            IActivityManager activityManagerHookProxy = ActivityManagerHookProxy.newInstance(this, gDefault.get());
+            RefUtils.setField(gDefault.getClass().getSuperclass(), gDefault, "mInstance", activityManagerHookProxy);
+            if (gDefault.get() == activityManagerHookProxy) {
+                this.mActivityManager = activityManagerHookProxy;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    public IActivityManager getActivityManager() {
+        return mActivityManager;
+    }
+
 
     public Context getHostContext() {
         if (mContext == null) {
@@ -67,14 +139,14 @@ public class PluginManager {
         return mContext;
     }
 
-    public Instrumentation getInstrumentation(){
+    public Instrumentation getInstrumentation() {
         return mInstrumentation;
     }
 
 
     public void loadPlugin(File apk) throws Exception {
         if (apk == null) {
-            throw new IllegalArgumentException("erro : apk is null");
+            throw new IllegalArgumentException("error : apk is null");
         }
         if (!apk.exists()) {
             throw new FileNotFoundException(apk.getAbsolutePath());
@@ -101,7 +173,14 @@ public class PluginManager {
     }
 
     public LoadedPlugin getLoadedPlugin(Intent intent) {
-        return null;
+        ComponentName componentName = PluginUtils.getComponentName(intent);
+        return getLoadedPlugin(componentName.getPackageName());
+    }
+
+    public List<LoadedPlugin> getAllLoadedPlugins() {
+        List<LoadedPlugin> plugins = new ArrayList<>();
+        plugins.addAll(mPlugins.values());
+        return plugins;
     }
 
 
